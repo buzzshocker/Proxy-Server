@@ -61,7 +61,7 @@ while True:
         # Send the HTTP response header line to the connection socket
 
         # Fill in start
-        connection_socket.send(bytes("HTTP/1.1 200 OK \r\n\r\n"))
+        connection_socket.send("HTTP/1.1 200 OK \r\n\r\n".encode())
         # Fill in end
  
         # Send the content of the requested file to connection socket
@@ -75,7 +75,7 @@ while True:
     except IOError:
         # Send HTTP response message for file not found
         # Fill in start
-        print("404 Not Found\n")
+        connection_socket.send("404 Not Found\n".encode())
 
         # Close the client connection socket
         connection_socket.close()
