@@ -10,7 +10,7 @@ server_socket = socket(AF_INET, SOCK_STREAM)
 # Fill in start
 
 # Establish the port to be bound to and bind it to the server_socket #
-server_socket.bind(('', 6789))
+server_socket.bind(("", 6789))
 # Start listening to allow socket to accept connection requests, 1 so that #
 # it handles only one request at a time #
 server_socket.listen(1)
@@ -55,19 +55,18 @@ while True:
 
         # Store the entire content of the requested file in a temporary
         # buffer
-        outputdata = f.read()  # Fill in start         #Fill in end
+        output_data = f.read()  # Fill in start         #Fill in end
         f.close()
 
         # Send the HTTP response header line to the connection socket
 
         # Fill in start
-
         connection_socket.send("HTTP/1.1 200 OK \r\n\r\n".encode())
         # Fill in end
  
         # Send the content of the requested file to connection socket
-        for i in range(0, len(outputdata)):
-            connection_socket.send(outputdata[i].encode())
+        for i in range(0, len(output_data)):
+            connection_socket.send(output_data[i].encode())
         connection_socket.send("\r\n".encode())
 
         # Close the client connection socket
@@ -76,7 +75,6 @@ while True:
     except IOError:
         # Send HTTP response message for file not found
         # Fill in start
-
         connection_socket.send("404 Not Found\n".encode())
 
         # Close the client connection socket
