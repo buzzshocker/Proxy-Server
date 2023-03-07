@@ -39,7 +39,7 @@ while True:
         # Read in the message in the way of the bytes from the socket. ##
         # 4096 was chosen since it should be a power of 2 and documentation ##
         # said 4096 is recommended so ¯\_(ツ)_/¯ ##
-        message = connection_socket.recv(1024).decode()
+        message = connection_socket.recv(4096).decode()
 
         if not message:
             break
@@ -61,7 +61,7 @@ while True:
         # Send the HTTP response header line to the connection socket
 
         # Fill in start
-        connection_socket.send(bytes("HTTP/1.1 200 OK \r\n\r\n"))
+        connection_socket.send(("HTTP/1.1 200 OK \r\n\r\n").encode())
         # Fill in end
  
         # Send the content of the requested file to connection socket
@@ -75,7 +75,7 @@ while True:
     except IOError:
         # Send HTTP response message for file not found
         # Fill in start
-        print("404 Not Found\n")
+        connection_socket.send(("404 Not Found\n").encode())
 
         # Close the client connection socket
         connection_socket.close()
