@@ -66,8 +66,8 @@ while True:
         # Fill in end
  
         # Send the content of the requested file to connection socket
-        for i in range(0, len(outputdata)):
-            connection_socket.send(outputdata[i].encode())
+        # for i in range(0, len(outputdata)):
+        connection_socket.send(output_data)
         connection_socket.send("\r\n".encode())
 
         # Close the client connection socket
