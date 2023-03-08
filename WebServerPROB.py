@@ -39,7 +39,7 @@ while True:
         # Read in the message in the way of the bytes from the socket. ##
         # 4096 was chosen since it should be a power of 2 and documentation ##
         # said 4096 is recommended so ¯\_(ツ)_/¯ ##
-        message = connection_socket.recv(2048).decode()
+        message = connection_socket.recv(4096).decode()
 
         if not message:
             connection_socket.close()
