@@ -39,9 +39,10 @@ while True:
         # Read in the message in the way of the bytes from the socket. ##
         # 4096 was chosen since it should be a power of 2 and documentation ##
         # said 4096 is recommended so ¯\_(ツ)_/¯ ##
-        message = connection_socket.recv(4096).decode()
+        message = connection_socket.recv(2048).decode()
 
         if not message:
+            connection_socket.close()
             break
         # Fill in end
 
@@ -51,7 +52,7 @@ while True:
 
         # Because the extracted path of the HTTP request includes
         # a character '\', we read the path from the second character
-        f = open(filename[1:])
+        f = open(filename[1:], "rb")
 
         # Store the entire content of the requested file in a temporary
         # buffer
@@ -66,8 +67,8 @@ while True:
         # Fill in end
  
         # Send the content of the requested file to connection socket
-        for i in range(0, len(outputdata)):
-            connection_socket.send(outputdata[i].encode())
+        # for i in range(0, len(outputdata)):
+        connection_socket.send(outputdata)
         connection_socket.send("\r\n".encode())
 
         # Close the client connection socket
