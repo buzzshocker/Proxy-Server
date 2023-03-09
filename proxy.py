@@ -1,5 +1,14 @@
 # Import socket module
 from socket import *    
+from google.colab import files
+import os
+
+# Set the path of the folder you want to create
+folder_path = '/content/cache_folder'
+
+# Create the folder if it does not exist
+if not os.path.exists(folder_path):
+    os.makedirs(folder_path)
 
 # Create a TCP server socket
 # (AF_INET is used for IPv4 protocols)
@@ -29,17 +38,33 @@ while True:
         # 4096 was chosen since it should be a power of 2 and documentation ##
         # said 4096 is recommended so ¯\_(ツ)_/¯ ##
         message = connection_socket.recv(4096).decode()
-
+        
         if not message:
             connection_socket.close()
             break
+
+        # Extract the path of the requested object from the message
+        # The path is the second part of HTTP header, identified by [1]
+        filename = message.split()[1]
+
+        # Because the extracted path of the HTTP request includes
+        # a character '\', we read the path from the second character
+        for file_in_cache in os.listdir(folder_path):
+            if file_in_cache == filename[1:]:
+                f = open(filename[1:], "rb")
+                output_data = f.read()
+                f.close()
+                connection_socket.send("HTTP/1.1 200 OK \r\n\r\n".encode())
+                connection_socket.send(output_data)
+                connection_socket.send("\r\n".encode())
+                connection_socket.close()
+                break
         
-        serverName = "localhost"
         serverPort = 6789
         # create TCP socket on client to use for connecting to remote server.  
         clientSocket = socket(AF_INET, SOCK_STREAM)
         # open the TCP connection
-        clientSocket.connect((serverName,serverPort))
+        clientSocket.connect("", serverPort)
         # interactively get user's line to be converted to upper case
         clientSocket.send(message.encode())
         # get user's line back from server having been modified by the server
@@ -47,19 +72,24 @@ while True:
         # close the TCP connection
         clientSocket.close()
 
+        if not from_server:
+            connection_socket.close()
+            break
+
         # Extract the path of the requested object from the message
         # The path is the second part of HTTP header, identified by [1]
         filename = from_server.split()[1]
+        
+        uploaded = files.upload()
 
-        # Because the extracted path of the HTTP request includes
-        # a character '\', we read the path from the second character
+        with open(os.path.join(folder_path, filename[1:]), 'wb') as file:
+            file.write(uploaded[filename[1:]])
+
         f = open(filename[1:], "rb")
-
         # Store the entire content of the requested file in a temporary
         # buffer
-        output_data = f.read()  # Fill in start         #Fill in end
+        output_data = f.read()
         f.close()
-
         # Send the HTTP response header line to the connection socket
         connection_socket.send("HTTP/1.1 200 OK \r\n\r\n".encode())
  
@@ -80,4 +110,3 @@ while True:
         connection_socket.close()
 
 proxy_socket.close()
-
