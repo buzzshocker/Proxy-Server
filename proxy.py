@@ -29,9 +29,14 @@ while True:
         # Check if the file is in the cache folder. If there, send it from there
         loop_check = 0
         for file_in_cache in os.listdir(folder_path):
-            if file_in_cache == split_string[2]:
-                f = open(os.path.join(folder_path, split_string[2]), "rb")
+            file_discovery = file_in_cache.split("-")
+            if  file_discovery[1] == split_string[2] and \
+                file_discovery[0] == serverPort:
+                f = open(os.path.join(folder_path, file_in_cache), "rb")
                 output_data = f.read()
+                if "HTTP/1.1 404" in output_data.decode():
+                    print("Hello")
+                    break
                 connection_socket.send("HTTP/1.1 200 OK \r\n\r\n".encode())
                 connection_socket.send(output_data)
                 #connection_socket.send("\r\n".encode())
@@ -58,12 +63,12 @@ while True:
             from_server = from_server.replace(b"HTTP/1.1 200 OK \r\n\r\n", b'')
         # If the message received has 404, then the file wasn't found and we
         # send back the same message
-        elif "HTTP/1.1 404" in data:
-            connection_socket.send("HTTP/1.1 404 Not Found \r\n\r\n".encode())
-            connection_socket.close()
-            clientSocket.close()
-            continue
-
+        #elif "HTTP/1.1 404" in data:
+         #   connection_socket.send("HTTP/1.1 404 Not Found \r\n\r\n".encode())
+          #  connection_socket.close()
+           # clientSocket.close()
+            #continue
+        print("Below HTTP Check\n")
         # Read till all data has been extracted
         file_data = from_server
         transfer_check = True
@@ -75,34 +80,30 @@ while True:
                 file_data += from_server
 
         # Close the socket
-        clientSocket.close()
+
 
         # Open and write the data to the file
-        with open(os.path.join(folder_path, split_string[2]), "wb") as out_file:
+        file_entry = serverPort + "-" + split_string[2]
+        with open(os.path.join(folder_path, file_entry), "wb") as out_file:
             out_file.write(file_data)
 
         # Send back the data from the file to the socket
-        loop_check = 0
-        for file_in_cache in os.listdir(folder_path):
-            if file_in_cache == split_string[2]:
-                f = open(os.path.join(folder_path, split_string[2]), "rb")
-                output_data = f.read()
-                connection_socket.send("HTTP/1.1 200 OK \r\n\r\n".encode())
-                connection_socket.send(output_data)
-                #connection_socket.send("\r\n".encode())
-                connection_socket.close()
-                f.close()
-                loop_check = 1
-                break
-        if loop_check == 1:
-            continue
+        if "HTTP/1.1 404 Not Found".encode() in file_data:
+            # connection_socket.send("HTTP/1.1 404 Not Found\n".encode())
+            print(file_data.decode())
+            connection_socket.send(file_data)
+        else:
+            connection_socket.send("HTTP/1.1 200 OK \r\n\r\n".encode())
+            connection_socket.send(file_data)
+            # connection_socket.send("\r\n".encode())
+        # Close the client connection socket
+        connection_socket.close()
+        clientSocket.close()
+    except IOError:
+        # Send HTTP response message for file not found
+        connection_socket.send("HTTP/1.1 404 Not Found\n".encode())
         # Close the client connection socket
         connection_socket.close()
 
-    except IOError:
-        # Send HTTP response message for file not found
-        connection_socket.send("404 Not Found\n".encode())
-        # Close the client connection socket
-        connection_socket.close()
 
 proxy_socket.close()
