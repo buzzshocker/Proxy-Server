@@ -96,14 +96,15 @@ while True:
         # get user's line back from server having been modified by the server
         file_data = ""
         from_server = clientSocket.recv(4096).decode()
-        
-        if "404 Not Found\n".encode() == from_server.encode():
-            connection_socket.send("404 Not Found\n".encode())
-            clientSocket.close()
-            connection_socket.close()
-            continue
-        elif "HTTP/1.1 200 OK \r\n\r\n".encode() == from_server.encode():
-            print("In HTTP Message")
+        print(from_server)
+        file_data += from_server
+        # if "404 Not Found\n".encode() == from_server.encode():
+        #     connection_socket.send("404 Not Found\n".encode())
+        #     clientSocket.close()
+        #     connection_socket.close()
+        #     continue
+        # elif "HTTP/1.1 200 OK \r\n\r\n".encode() == from_server.encode():
+        #     print("In HTTP Message")
 
         # print(from_server)
         # file_data += from_server
