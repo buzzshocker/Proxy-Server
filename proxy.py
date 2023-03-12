@@ -51,14 +51,77 @@ while True:
         # Extract the path of the requested object from the message
         # The path is the second part of HTTP header, identified by [1]
         filename = message.split()[1]
-
+        split_string = filename.split('/')
+        hostname = split_string[1].split(':')
+        serverPort = hostname[1]
+        host = hostname[0]
+        
+        # print(host)
+        # print(serverPort)
+        # print(hostname)
+        # print(split_string)
+        # print(filename[1:])
         # Because the extracted path of the HTTP request includes
         # a character '\', we read the path from the second character
         x = 0
+        
         for file_in_cache in os.listdir(folder_path):
-            if file_in_cache == filename[1:]:
+            if file_in_cache == split_string[2]:
                 print("File found in cache\n")
-                f = open(filename[1:], "rb")
+                f = open(os.path.join(folder_path, split_string[2]), "rb")
+                output_data = f.read()
+                connection_socket.send("HTTP/1.1 200 OK \r\n\r\n".encode())
+                connection_socket.send(output_data)
+                connection_socket.send("\r\n".encode())
+                connection_socket.close()
+                f.close()
+                print("File sent through connection socket and socket closed\n")
+                x = 1
+                break
+        
+        if x == 1:
+            continue
+
+        # create TCP socket on client to use for connecting to remote server.
+        clientSocket = socket(AF_INET, SOCK_STREAM)
+        print("Client socket created\n")
+        # open the TCP connection
+        clientSocket.connect((host, int(serverPort)))
+        print("Client socket connected\n")
+        print("Message", message)
+        send_message = "GET " + "/" + split_string[2] + " HTTP/1.1"
+        # interactively get user's line to be converted to upper case
+        clientSocket.send(send_message.encode())
+        print("Client socket sends message, encoded")
+        # get user's line back from server having been modified by the server
+        file_data = ""
+        from_server = clientSocket.recv(4096).decode()
+        
+        if "404 Not Found\n".encode() == from_server.encode():
+            connection_socket.send("404 Not Found\n".encode())
+            clientSocket.close()
+            connection_socket.close()
+            continue
+        elif "HTTP/1.1 200 OK \r\n\r\n".encode() == from_server.encode():
+            print("In HTTP Message")
+
+        # print(from_server)
+        # file_data += from_server
+        while from_server != "":
+            from_server = clientSocket.recv(4096).decode()
+            file_data += from_server
+
+        clientSocket.close()
+
+        print(file_data)
+        with open(os.path.join(folder_path, split_string[2]), "wb") as out_file:
+            out_file.write(file_data.encode())
+
+        x = 0
+        for file_in_cache in os.listdir(folder_path):
+            if file_in_cache == split_string[2]:
+                print("File stored in cache\n")
+                f = open(os.path.join(folder_path, split_string[2]), "rb")
                 output_data = f.read()
                 connection_socket.send("HTTP/1.1 200 OK \r\n\r\n".encode())
                 connection_socket.send(output_data)
@@ -71,43 +134,15 @@ while True:
         if x == 1:
             continue
 
-        split_string = filename.split('/')
-        hostname = split_string[1].split(':')
-        serverPort = hostname[1]
-        host = hostname[0]
-        # create TCP socket on client to use for connecting to remote server.
-        clientSocket = socket(AF_INET, SOCK_STREAM)
-        print("Client socket created\n")
-        # open the TCP connection
-        clientSocket.connect((host, int(serverPort)))
-        print("Client socket connected\n")
-        # interactively get user's line to be converted to upper case
-        clientSocket.send(message.encode())
-        print("Client socket sends message, encoded")
-        # get user's line back from server having been modified by the server
-        file_data = ""
-        from_server = ""
-        while from_server != "":
-            from_server = clientSocket.recv(4096).decode()
-            file_data += from_server
+        # # Send the HTTP response header line to the connection socket
+        # connection_socket.send("HTTP/1.1 200 OK \r\n\r\n".encode())
 
-        with open(os.path.join(folder_path, split_string[2]), "wb") as out_file:
-            out_file.write(file_data.encode())
+        # # Send the content of the requested file to connection socket
+        # # for i in range(0, len(outputdata)):
+        # connection_socket.send(output_data)
+        # connection_socket.send("\r\n".encode())
 
-        f = open(split_string[2], "rb")
-        # Store the entire content of the requested file in a temporary
-        # buffer
-        output_data = f.read()
-        f.close()
-        # Send the HTTP response header line to the connection socket
-        connection_socket.send("HTTP/1.1 200 OK \r\n\r\n".encode())
-
-        # Send the content of the requested file to connection socket
-        # for i in range(0, len(outputdata)):
-        connection_socket.send(output_data)
-        connection_socket.send("\r\n".encode())
-
-        # Close the client connection socket
+        # Close the client connection socket\
         connection_socket.close()
 
     except IOError:
