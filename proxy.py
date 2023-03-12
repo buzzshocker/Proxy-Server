@@ -118,22 +118,25 @@ while True:
         with open(os.path.join(folder_path, split_string[2]), "wb") as out_file:
             out_file.write(file_data.encode())
 
-        x = 0
-        for file_in_cache in os.listdir(folder_path):
-            if file_in_cache == split_string[2]:
-                print("File stored in cache\n")
-                f = open(os.path.join(folder_path, split_string[2]), "rb")
-                output_data = f.read()
-                connection_socket.send("HTTP/1.1 200 OK \r\n\r\n".encode())
-                connection_socket.send(output_data)
-                connection_socket.send("\r\n".encode())
-                connection_socket.close()
-                f.close()
-                print("File sent through connection socket and socket closed\n")
-                x = 1
-                break
-        if x == 1:
-            continue
+        connection_socket.send("HTTP/1.1 200 OK \r\n\r\n".encode())
+        connection_socket.send(file_data.encode())
+        connection_socket.send("\r\n".encode())
+        # x = 0
+        # for file_in_cache in os.listdir(folder_path):
+        #     if file_in_cache == split_string[2]:
+        #         print("File stored in cache\n")
+        #         f = open(os.path.join(folder_path, split_string[2]), "rb")
+        #         output_data = f.read()
+        #         connection_socket.send("HTTP/1.1 200 OK \r\n\r\n".encode())
+        #         connection_socket.send(output_data)
+        #         connection_socket.send("\r\n".encode())
+        #         connection_socket.close()
+        #         f.close()
+        #         print("File sent through connection socket and socket closed\n")
+        #         x = 1
+        #         break
+        # if x == 1:
+        #     continue
 
         # # Send the HTTP response header line to the connection socket
         # connection_socket.send("HTTP/1.1 200 OK \r\n\r\n".encode())
